@@ -1,0 +1,7 @@
+{
+	"url": "vps2.crowdaronline.com",
+	"protocol": "http",
+	"port": "8084",
+	"path": "/rest/reports/q",
+	"DURACION": "1800"
+}
