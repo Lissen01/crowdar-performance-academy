@@ -1,111 +1,76 @@
-# LIPPIA Performance Example Project
+# Testing de Performance API REST - Endpoints
+![Swagger UI](https://i.imgur.com/6mrL91w.jpg "Swagger UI")
 
-## System Requirements : 
-+ git client: https://www.atlassian.com/git/tutorials/install-git 
-+ Jmeter 5.3: https://jmeter.apache.org/download_jmeter.cgi
-+ docker 18.09: https://docs.docker.com/install/linux/docker-ce/ubuntu/ 
-+ docker compose 1.24: https://docs.docker.com/compose/install/
+[Swagger UI -Report Server](http://vps2.crowdaronline.com:8083/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config#/ "Swagger UI-Report Server")
 
-## Docker stack
+### Propósito
+El siguiente proyecto tiene el propósito de demostrar y permitir que los desarrolladores de automatización de pruebas prueben una API usando *Lippia Automation Framework* basado en la libreria Rest Client.
 
-The following project includes the basic Docker Lippia Containers to run this  web sample project. You can choose to run the code from your favourite IDE, run from console or from Jenkins using the Docker Stack.
-To install and start a local instalation with Docker containers go to **Getting started** at the end of this guide. 
+**Comando** para la ejecución del test:
 
-# Purpose: 
+`mvn clean verify`
 
-The following project has the purpose of demonstrate and let test automation developers to to test APIs requests using Lippia Automation Framework based on Rest Client library and check the Performance of the requests. 
-This sample project includes the required components as binaries, docker containers and configuration files to simply download and run a set of sample tests in your local computer, using the Lippia container stack described bellow.
+## Configuración global POM.xml
 
-# Getting started
-
-## Executing tests in you local machine 
-- go to root project folder and you will find a pom.xml file
-- run the following command : 
+Obtención del **tag principal** para correr el test mediante el filtro de cucumber.
+>@Tcount --tags @1ps
+``` xml
+ <properties>
+		<crowd.project.name>Performance Sample Project</crowd.project.name>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<crowdar.cucumber.filter>@Tcount --tags @1ps</crowdar.cucumber.filter>
+		<crowdar.cucumber.option>src/test/resources/features --glue com/crowdar/configuration --glue com/crowdar/performance/steps --tags ${crowdar.cucumber.filter} --tags 'not @Ignore' --plugin pretty</crowdar.cucumber.option>
+	</properties>
 ```
-mvn clean test
+## Feature File
+
+Los escenarios de prueba se pueden escribir en Gherkin utilizando la metodología BDD; El siguiente es **a modo de ejemplo**.
+
+```gherkin
+@Performance @get_user
+Feature: Existing jmx file
+  COMO un usuario del sitio
+  QUIERO ejecutar peticiones a las Sucursales
+  PARA verificar que el mismo responda apropiadamente.
+
+  Scenario Outline: Run performance with existing jmx file
+    Given configure the performance test with '<iterations>' iterations '<users>' users and a ramp time of '<ramp_time>' seconds
+    When run the script '<script_name>'
+    And remplace variables with '<json>'
+
+    @1ps
+    Examples:
+      | iterations | users | ramp_time | script_name | json         |
+      | 1          | 1     | 1         | swaggerUI   | get_user_vps |
+
+    @2ps
+    Examples:
+      | iterations | users | ramp_time | script_name | json         |
+      | 1          | 600   | 300       | swaggerUI   | get_user_vps |
+
+    @3ps
+    Examples:
+      | iterations | users | ramp_time | script_name | json         |
+      | 1          | 900   | 300       | swaggerUI   | get_user_vps |
 ```
-	
-## Project structure
-
-A typical Lippia Test Automation project usually looks like this 
-
-```
-	.
-├── main
-│   ├── java
-│   │   └── com
-│   │       └── crowdar
-│   │           └── api
-│	│				├── config
-│	│				│	├── EntityConfiguration.java
-│   │               ├── model
-│   │               │   ├── Data.java
-│	│				│	├── User.java
-│   │               │   └── UserCreated.java
-│   │               └── services
-│   │                   └── UserService.java
-│   └── resources
-│       ├── config.properties
-│       ├── cucumber.properties
-│       └── log4j.properties
-└── test
-    ├── java
-    │   ├── ApiExampleProjectParallelTestRunner.java
-    │   ├── ApiExampleProjectTestRunner.java
-    │   └──
-	└── steps	
-	│   └── UserSteps.java
-	└── apiExampleProject
-    │           ├── Hooks.java
-    └── resources
-        └── features
-            └── ApiExample.feature
-		└── jsons
-            └── createUser.json
+## Configuración Json utilizada en este ejemplo
+En principio seteadas en **JMeter** y posteriormente cambiadas en las *variables de usuario* una vez realizada la prueba.
+``` json
+ {
+	"url": "vps2.crowdaronline.com",
+	"protocol": "http",
+	"port": "8084",
+	"path": "/user/authenticate",
+	"DURACION": "1800"
+}
 ```
 
-Folder's description:
+## Getting started
 
-|Path   |Description    |
-|-------|----------------|
-|main\java\\...\examples\model\\\*.java|Folder with all the **Mapped Objects** matching steps with java code|
-|main\java\\...\examples\config\\\*Steps.java|Folder with all the **Settings** wich match with Gherkin Test Scenarios |
-|test\resources\features\\\*.feature|Folder with all the **feature files** containing **Test Scenarios** and **Sample Data** |
-|main\resources|Folder with all configuration needed to run Lippia |
-
-In this example, *ApiExample* is the first endpoint the framework will interact with. The **steps** defined in *UserSteps.java* to execute the *Test Scenarios* defined in Gherkin language. 
-
-
-|File   | Description    |
-|-------|----------------|
-|User.java   | Model: you can declare every attribute expected on the responses that you want to interact with. You need to add one new file for each response you want to model in your tests. |
-|UserSteps.java   | StepOpject: Code to support the behaviour of each **step** coded into the feature files for the *User* endpoint. This code executes the interaction between the Framework and the api endopoint and match the steps with the code who run interactions. |
-|ApiExample.feature| Feature file: Definition of the **Test Scenarios** with all the **steps** written in Cucumber format (http)|
-
-
-
-# Scenario Example
-
-The scenarios can be written using BDD methodology. 
-	
-	Given as a precondition
-	
-	When as actions
-	
-	Then as validations
-	
-	
-On each declared step you can insert the calls defined from service classes
-
-# Json Structure for request data
-
-This project use json to manage request data like url parameters, body data, headers and url endpoints. The following picture shows the structure of the json
-
-
-
-# Getting started
-    
-- If you are Linux user 
-    [`Getting started - Linux User`](https://bitbucket.org/crowdarautomation/lippia-performance-example-project/src/master/docs/README_Linux.md)
-- If you are Windws user
-    [`Getting started - Windows User`](https://bitbucket.org/crowdarautomation/lippia-performance-example-project/src/master/docs/README_Windows.md)# crowdar-performance-academy
+* Descargar e Instalar Jmeter:
+1. [Apache Jmeter](https://apache.dattatec.com//jmeter/source/apache-jmeter-5.3_src.zip "Jmeter 3.6.3") 
+* Pasos para la configuración del Mismo:
+1. [Drive Configuración](https://drive.google.com/drive/folders/19PMWhMM8B-2OOOvjU9doXuSYeHEg5QeT?usp=sharing "JMeter Configuración Básica") 
+* Si todo funciona perfectamente, se mostrará en la pantalla *la carga de Stres con sus respectivos datos*.
+> Tiempo de muestreo, Hilos, ESTADO, Cantidad de Bytes, Latencia y tiempos de conexión
+* Dependiendo de las Iteraciones, usuarios, ramp time que se setean en el feature designado por cada prueba de cada endpoint.
